@@ -1,0 +1,92 @@
+<!-- LedgerLink v4.0 - Decoupled Frontend -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LedgerLink v4.0</title>
+    <!-- All CSS from v3.2 goes here. It is unchanged. -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; } html { font-size: 16px; scroll-behavior: smooth; } :root { --primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981; --danger: #ef4444; --bg-card: #ffffff; --text-primary: #0f172a; --text-secondary: #64748b; --border: #e2e8f0; --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1); --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1); --radius: 12px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+        .container { max-width: 900px; margin: 0 auto; } .header { text-align: center; margin-bottom: 24px; } .header h1 { color: white; font-size: 1.8rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1); } .header p { color: rgba(255,255,255,0.9); font-size: 1rem; } .date-selector { background: var(--bg-card); padding: 16px; border-radius: var(--radius); box-shadow: var(--shadow-lg); margin-bottom: 24px; } .date-selector-content { display: flex; flex-direction: column; align-items: center; gap: 8px; } .date-selector label { font-weight: 600; color: var(--text-primary); } .date-selector input[type="date"] { padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; width: 100%; max-width: 200px; } #message { padding: 16px; border-radius: var(--radius); margin-bottom: 20px; display: none; font-weight: 500; } .success { background: #d1fae5; color: #065f46; border-left: 4px solid var(--success); } .error { background: #fee2e2; color: #991b1b; border-left: 4px solid var(--danger); }
+        .entries-wrapper { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; } .transaction-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-md); position: relative; } .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; } .field-group label { font-weight: 600; color: var(--text-primary); font-size: 0.9rem; margin-bottom: 4px; display: block; } .field-group input, .field-group textarea { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; font-family: inherit; } .field-group input:focus, .field-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .radio-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; } .radio-option input[type="radio"] { position: absolute; opacity: 0; } .radio-label { display: block; text-align: center; padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; } .radio-option input[type="radio"]:checked + .radio-label { background: var(--primary); color: white; border-color: var(--primary); } .action-buttons { display: flex; flex-direction: column; gap: 12px; position: sticky; bottom: 0; padding: 16px; margin: 0 -16px; background: linear-gradient(to top, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.95)); backdrop-filter: blur(5px); border-top: 1px solid rgba(255,255,255,0.2); }
+        .btn { padding: 14px; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; } .btn-add { background: white; color: var(--primary); border: 2px solid var(--primary); } .btn-submit { background: var(--primary); color: white; }
+        @media (min-width: 768px) { body { padding: 40px; } .header h1 { font-size: 2.5rem; } .date-selector-content { flex-direction: row; } .date-selector input[type="date"] { width: auto; } .form-grid { grid-template-columns: 1fr 1fr; } .full-width { grid-column: 1 / -1; } .action-buttons { flex-direction: row; border-radius: var(--radius); width: auto; margin: 0; } .btn { width: auto; } }
+        .autocomplete-container { position: relative; } .autocomplete-items { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid var(--primary); border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 10; box-shadow: var(--shadow-lg); } .autocomplete-items div { padding: 12px; cursor: pointer; } .autocomplete-items div:hover { background: #f8fafc; color: var(--primary); } .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); } .card-number { font-weight: 700; color: var(--primary); } .btn-remove { background: #f8fafc; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); } .other-input { display: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+      <header class="header"><h1>LedgerLink v4.0</h1><p>Decoupled & Reliable</p></header>
+      <div id="message"></div>
+      <div class="date-selector"><div class="date-selector-content"><label for="masterDate">📅 Default Date:</label><input type="date" id="masterDate"></div></div>
+      <form id="multiTransactionForm">
+        <div id="entry-container" class="entries-wrapper"></div>
+        <div class="action-buttons"><button type="button" class="btn btn-add" id="addEntry"><span>➕</span> Add</button><button type="submit" class="btn btn-submit"><span>✓</span> Submit</button></div>
+      </form>
+    </div>
+    <template id="transaction-template">
+        <div class="transaction-card"><div class="card-header"><span class="card-number">#<span class="entry-number"></span></span><button type="button" class="btn-remove" title="Remove" onclick="this.closest('.transaction-card').remove(); updateCardNumbers();">\u00d7</button></div><div class="form-grid"><div class="field-group"><label>\ud83d\udcd🏷️ Subcategory</label><div class="autocomplete-container"><input type="text" class="subcategory-input" required placeholder="Start typing..."></div></div><div class="field-group"><label>\ud83d\udcb5 Amount</label><input type="number" class="amount" step="0.01" min="0" required placeholder="0.00"></div><div class="field-group"><label>\ud83d\udcc6 Date</label><input type="date" class="date"></div><div class="field-group who-paid-group full-width"><label class="payer-label">\ud83d\udc64 Who Paid?</label><div class="radio-options"><div class="radio-option"><input type="radio" class="paidByRadio" value="Me" checked><label class="radio-label">Me</label></div><div class="radio-option"><input type="radio" class="paidByRadio" value="Wife"><label class="radio-label">Wife</label></div><div class="radio-option"><input type="radio" class="paidByRadio" value="Other"><label class="radio-label">Other</label></div></div><input type="text" class="other-input" placeholder="Specify who paid"></div><div class="field-group full-width"><label>\ud83d\udcdd Description</label><textarea class="description" placeholder="Optional notes..."></textarea></div></div></div>
+    </template>
+    <script>
+        // --- MODIFIED SCRIPT TO USE FETCH API ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuHI--n0ZY6AeYy0E38NaTUOWOTLbirur8G2a9x15sPfSRR5rvOWOZ8LLjiiDcFjpYkg/exec"; // <-- CRITICAL STEP
+        let categoryData = {}, allSubcategories = [];
+
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById('masterDate').valueAsDate = new Date();
+            
+            // Fetch categories from our new API endpoint
+            fetch(SCRIPT_URL)
+                .then(response => response.json())
+                .then(data => {
+                    categoryData = data;
+                    allSubcategories = Object.keys(data).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+                    addEntry();
+                })
+                .catch(error => showMessage("❌ Critical Error: Could not load categories.", "error"));
+
+            document.getElementById('addEntry').addEventListener('click', addEntry);
+            document.getElementById('multiTransactionForm').addEventListener('submit', handleFormSubmit);
+        });
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.querySelector('.btn-submit');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>⏳</span> Submitting...';
+
+            const transactions = [];
+            document.querySelectorAll('.transaction-card').forEach(entry => {
+                const subcategory = entry.querySelector('.subcategory-input').value.trim();
+                const amount = entry.querySelector('.amount').value;
+                if (subcategory && amount) {
+                    let paidByValue = entry.querySelector('input[type="radio"]:checked').value;
+                    if (paidByValue === 'Other') paidByValue = entry.querySelector('.other-input').value || 'Other';
+                    transactions.push({ date: entry.querySelector('.date').value, subcategory, amount, paidBy: paidByValue, description: entry.querySelector('.description').value });
+                }
+            });
+            
+            if (transactions.length === 0) {
+                showMessage('⚠️ Please fill out at least one transaction.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>✓</span> Submit All';
+                return;
+            }
+
+            // Post the data to our new API endpoint
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(transactions)
+            })
+            .then(response => response.json())
+            .then(data => onSuccess(data))
+            .catch(error => onFailure(error));
+        }
+
+        // --- All other JavaScript functions (addEntry, onSuccess, etc.) are the same as v3.2 ---
+        function addEntry(){const a=document.getElementById("transaction-template").content.cloneNode(!0),b=a.querySelector(".transaction-card");b.querySelector(".date").value=document.getElementById("masterDate").value;const c=Date.now(),d=`paidBy_${c}`;b.querySelectorAll(".radio-option").forEach(a=>{const b=a.querySelector('input[type="radio"]'),c=a.querySelector(".radio-label"),e=`paidBy_${b.value}_${c}`;b.name=d,b.id=e,c.setAttribute("for",e),b.addEventListener("change",a=>{b.querySelector(".other-input").style.display="Other"===a.target.value?"block":"none"})});const e=b.querySelector(".subcategory-input"),f=document.createElement("div");f.className="autocomplete-items",e.parentElement.appendChild(f),e.addEventListener("input",function(){const a=this.value;updatePayerLabel(b,a),f.innerHTML="",a&&allSubcategories.filter(b=>b.toLowerCase().includes(a.toLowerCase())).forEach(a=>{const c=document.createElement("div");c.textContent=a,c.addEventListener("click",function(){e.value=this.textContent,updatePayerLabel(b,this.textContent),f.innerHTML=""}),f.appendChild(c)})}),document.getElementById("entry-container").appendChild(a),updateCardNumbers()}function updatePayerLabel(a,b){const c=a.querySelector(".payer-label");c&&(categoryData[b]&&"income"===categoryData[b].main.toLowerCase().trim()?c.innerHTML="💳 Paid To? / Received By?":c.innerHTML="👤 Who Paid?")}function updateCardNumbers(){document.querySelectorAll(".transaction-card").forEach((a,b)=>{a.querySelector(".entry-number").textContent=b+1})}document.addEventListener("click",a=>{a.target.closest(".autocomplete-container")||document.querySelectorAll(".autocomplete-items").forEach(a=>a.innerHTML="")});function onSuccess(a){showMessage(a.success?"✅ "+a.message:"❌ "+a.message,a.success?"success":"error");const b=document.querySelector(".btn-submit");a.success&&(document.getElementById("entry-container").innerHTML="",addEntry()),b.disabled=!1,b.innerHTML="<span>✓</span> Submit All"}function onFailure(a){showMessage("❌ Submission failed: "+a.message,"error"),document.querySelector(".btn-submit").disabled=!1,b.innerHTML="<span>✓</span> Submit All"}function showMessage(a,b){const c=document.getElementById("message");c.textContent=a,c.className=b,c.style.display="block",setTimeout(()=>{c.style.display="none"},5e3),window.scrollTo({top:0,behavior:"smooth"})}
+    </script>
+</body>
+</html>
